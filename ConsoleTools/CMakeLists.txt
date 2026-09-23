@@ -37,7 +37,7 @@ set(SOURCES
 add_executable(demo ${SOURCES})
 
 # Options de compilation
-target_compile_options(contacts_directory PRIVATE
+target_compile_options(demo PRIVATE
     -Wall
     -Wextra
     $<$<CONFIG:Debug>:-g -O0>
@@ -45,7 +45,7 @@ target_compile_options(contacts_directory PRIVATE
 )
 
 # Installation
-install(TARGETS ConsoleTools DESTINATION bin)
+install(TARGETS demo DESTINATION bin)
 
 
 
