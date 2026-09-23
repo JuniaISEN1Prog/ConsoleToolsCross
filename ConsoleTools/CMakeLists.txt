@@ -36,6 +36,10 @@ set(SOURCES
 # Créer l'exécutable
 add_executable(demo ${SOURCES})
 
+if(NOT WIN32)
+  target_link_libraries(demo PRIVATE m)
+endif()
+
 # Options de compilation
 target_compile_options(demo PRIVATE
     -Wall

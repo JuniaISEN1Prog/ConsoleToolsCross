@@ -1,8 +1,46 @@
 #include "ConsoleToolsLinux.h"
+#include <math.h>
+#include <wchar.h>
 
 // Variables globales pour la gestion du terminal
 static struct termios old_tio, new_tio;
 static bool console_initialized = false;
+
+SYSTEMTIME elapsedTime(bool reset) {
+    static struct timeval previous = { 0, 0 };
+    SYSTEMTIME duration;
+    struct timeval current;
+
+    gettimeofday(&current, NULL);
+    if (reset || (previous.tv_sec == 0 && previous.tv_usec == 0)) {
+        previous = current;
+        duration.tv.tv_sec = 0;
+        duration.tv.tv_usec = 0;
+        return duration;
+    }
+
+    duration.tv.tv_sec = current.tv_sec - previous.tv_sec;
+    duration.tv.tv_usec = current.tv_usec - previous.tv_usec;
+    if (duration.tv.tv_usec < 0) {
+        duration.tv.tv_sec--;
+        duration.tv.tv_usec += 1000000;
+    }
+    previous = current;
+    return duration;
+}
+
+int blink(COORD pos, DWORD length, DWORD height, DWORD duration) {
+    if (length == 0 || height == 0) return 0;
+
+    printf(CSI "%d;%d;%d;%d$r", pos.Y + 1, pos.X + 1,
+           pos.Y + height, pos.X + length);
+    fflush(stdout);
+    Sleep(duration);
+    printf(CSI "%d;%d;%d;%d$r", pos.Y + 1, pos.X + 1,
+           pos.Y + height, pos.X + length);
+    fflush(stdout);
+    return 0;
+}
 
 // Convertir une chaîne en majuscules
 void _strupr_s(char* str, size_t size) {
@@ -42,11 +80,12 @@ int closeConsole(void) {
 }
 
 // Effacer l'écran
-void clearScreen(void) {
+int clearScreen(void) {
     printf(CSI "2J"); // Effacer l'écran
     printf(CSI "3J"); // Effacer le scroll back
     printf(CSI "H");  // Curseur en haut à gauche
     fflush(stdout);
+    return ferror(stdout) ? 1 : 0;
 }
 
 // Déplacer le curseur
@@ -91,6 +130,28 @@ int _getch(void) {
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
     return ch;
+}
+
+wint_t _getwch(void) {
+    return (wint_t)_getch();
+}
+
+int plotChar(char SomeChar) {
+    if (putchar(SomeChar) == EOF) return errno;
+    fflush(stdout);
+    return 0;
+}
+
+int rangedRand(int range_min, int range_max) {
+    if (range_max <= range_min) return range_min;
+    return (int)((double)rand() / ((double)RAND_MAX + 1.0) *
+                 (range_max - range_min)) + range_min;
+}
+
+float floatRangedRand(float range_min, float range_max) {
+    if (range_max <= range_min) return range_min;
+    return (float)((double)rand() / ((double)RAND_MAX + 1.0) *
+                   (range_max - range_min)) + range_min;
 }
 
 // Lire un caractère avec filtre
@@ -177,6 +238,91 @@ int setBackGroundColor(int col) {
 
     printf(CSI "%dm", ansi_color);
     fflush(stdout);
+    return 0;
+}
+
+int maxValue(int* array, unsigned int eltsCounts) {
+    if (array == NULL || eltsCounts == 0) return 0;
+
+    int max = array[0];
+    for (unsigned int i = 1; i < eltsCounts; i++) {
+        if (array[i] > max) max = array[i];
+    }
+    return max;
+}
+
+int drawArray(int* array, int EltsCount, COORD p1, COORD p2,
+              bool prop, bool reverse, bool paint, int color) {
+    int winSizeX = p2.X - p1.X + 1;
+    int winSizeY = p2.Y - p1.Y + 1;
+
+    if (array == NULL || EltsCount <= 0 || winSizeX < 3 ||
+        winSizeY < EltsCount + 1) return -1;
+
+    if (winSizeX % 2 == 0) {
+        p2.X--;
+        winSizeX--;
+    }
+
+    if (paint) {
+        setBackGroundColor(color);
+        for (int line = p1.Y; line <= p2.Y; line++) {
+            for (int col = p1.X; col <= p2.X; col++) {
+                moveCursor((unsigned short)col, (unsigned short)line);
+                plotChar(' ');
+            }
+        }
+    }
+
+    setWriteColor(RED);
+    for (int col = p1.X; col <= p2.X; col++) {
+        moveCursor((unsigned short)col, (unsigned short)p2.Y);
+        plotChar('#');
+    }
+    for (int line = p1.Y; line <= p2.Y; line++) {
+        moveCursor((unsigned short)((p1.X + p2.X) / 2), (unsigned short)line);
+        plotChar('#');
+    }
+
+    int max = maxValue(array, (unsigned int)EltsCount);
+    float scaleFactor = max > 0 ? (float)winSizeX / (float)max : 0.0f;
+    int midPos = (p1.X + p2.X) / 2;
+    int increment = reverse ? -1 : 1;
+
+    for (int idx = reverse ? EltsCount - 1 : 0;
+         (!reverse && idx < EltsCount) || (reverse && idx >= 0);
+         idx += increment) {
+        int value = array[idx];
+        int currentColor = value % 7 + 9;
+        setWriteColor(currentColor);
+        int diskSize = prop ? (int)roundf(value * scaleFactor) : winSizeX;
+        if (prop) {
+            if (diskSize % 2 == 0) diskSize--;
+            if (diskSize < 3) diskSize = 3;
+            if (diskSize > winSizeX) diskSize = winSizeX;
+        }
+
+        for (int col = midPos - diskSize / 2;
+             col <= midPos + diskSize / 2; col++) {
+            if (col != midPos) {
+                moveCursor((unsigned short)col,
+                           (unsigned short)(p2.Y - idx - 1));
+                plotChar('#');
+            }
+            if (!prop) {
+                moveCursor((unsigned short)(p1.X + 1),
+                           (unsigned short)(p2.Y - idx - 1));
+                setWriteColor(BLACK);
+                setBackGroundColor(currentColor);
+                printf("%3d", value);
+                setWriteColor(currentColor);
+                setBackGroundColor(BLACK);
+            }
+        }
+    }
+
+    setWriteColor(WHITE);
+    moveCursor(0, (unsigned short)(p2.Y + 1));
     return 0;
 }
 

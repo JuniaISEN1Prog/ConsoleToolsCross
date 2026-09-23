@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <time.h>
+#include <wchar.h>
 #include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
@@ -22,6 +23,8 @@ typedef struct {
 typedef struct {
     struct timeval tv;
 } SYSTEMTIME;
+
+typedef unsigned int DWORD;
 
 // Macros de compatibilité
 #define CSI "\x1b["
@@ -55,17 +58,25 @@ typedef struct {
 // Prototypes des fonctions
 int openConsole(void);
 int closeConsole(void);
-void clearScreen(void);
+SYSTEMTIME elapsedTime(bool reset);
+int blink(COORD pos, DWORD length, DWORD height, DWORD duration);
+int clearScreen(void);
 void moveCursor(unsigned short int X, unsigned short int Y);
 COORD getConsoleSize(void);
 void redimensionner_console(int largeur, int hauteur);
 void printStatusLine(const char* const pszMessage, COORD const Size);
 char readChar(const char* filtre);
 int _getch(void);
+wint_t _getwch(void);
+int plotChar(char SomeChar);
+int rangedRand(int range_min, int range_max);
+float floatRangedRand(float range_min, float range_max);
 void hideCursor(void);
 void showCursor(void);
 int setWriteColor(int col);
 int setBackGroundColor(int col);
+int maxValue(int* array, unsigned int eltsCounts);
+int drawArray(int* array, int EltsCount, COORD p1, COORD p2, bool prop, bool reverse, bool paint, int color);
 void enterAlternateBuffer(void);
 void exitAlternateBuffer(void);
 void setScrollingMargins(int top, int bottom);
