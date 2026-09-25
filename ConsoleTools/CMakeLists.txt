@@ -3,7 +3,7 @@
 # Intégration vcpkg pour la compilation Windows/MSYS64.
 # CMAKE_TOOLCHAIN_FILE doit être défini avant le premier appel à project().
 if(WIN32)
-  set(CMAKE_TOOLCHAIN_FILE "C:/msys64/mingw64/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "Chemin vers le toolchain vcpkg")
+  set(CMAKE_TOOLCHAIN_FILE "C:/msys64/mingw64/bin/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "Chemin vers le toolchain vcpkg")
   set(VCPKG_TARGET_TRIPLET "x64-mingw-dynamic" CACHE STRING "Triplet vcpkg")
 endif()
 
@@ -19,6 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(WIN32)
     set(CONSOLE_SRC ConsoleTools.c)
     add_definitions(-DPLATFORM_WINDOWS)
+    add_compile_definitions(_WIN32_WINNT=0x0A00 WINVER=0x0A00)
 else()
     set(CONSOLE_SRC ConsoleToolsLinux.c)
     add_definitions(-DPLATFORM_LINUX)

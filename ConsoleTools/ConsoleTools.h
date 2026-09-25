@@ -1,5 +1,14 @@
 #pragma once
+#ifndef WINVER
+#define WINVER 0x0A00
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0A00
+#endif
 #include <windows.h>
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
 
 // Standard Library C-Style
 #include <stdio.h>
@@ -95,7 +104,7 @@ SYSTEMTIME elapsedTime(bool reset);
 char readChar(const char* filtre);
 
 
-// permet d'utiliser les fonctions moveCursor et PlotChar (un seul appel en début de programme)
+// permet d'utiliser les fonctions moveCursor et PlotChar (un seul appel en dï¿½but de programme)
 
 /// <summary>
 /// Initialize console environment before using ConsoleTools functions
@@ -113,7 +122,7 @@ int openConsole();
 /// <param name="duration"></param>
 /// <returns></returns>
 int blink(COORD pos, DWORD length, DWORD heigth, DWORD duration);
-// CloseConsole() doit être appelée après la dernière utilisation de moveCursor et PlotChar
+// CloseConsole() doit ï¿½tre appelï¿½e aprï¿½s la derniï¿½re utilisation de moveCursor et PlotChar
 
 /// <summary>
 /// Restore console state before leaving application.

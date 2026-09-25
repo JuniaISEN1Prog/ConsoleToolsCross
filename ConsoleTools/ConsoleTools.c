@@ -18,7 +18,7 @@ SYSTEMTIME elapsedTime(bool reset) {
 		
 	SYSTEMTIME duration;
 	FILETIME fcurrentTime, fduration;
-	static ULARGE_INTEGER fprevTime64 = { 0,0 };
+	static ULARGE_INTEGER fprevTime64 = { {0,0} };
 	ULARGE_INTEGER fcurrTime64, fduration64;
 	if (reset) {
 		fprevTime64.QuadPart = 0;
@@ -667,19 +667,19 @@ void redimensionner_console(int largeur, int hauteur) {
 	SMALL_RECT rect;
 	COORD coord;
 
-	// Définir les dimensions de la fenêtre
+	// Dï¿½finir les dimensions de la fenï¿½tre
 	rect.Left = 0;
 	rect.Top = 0;
 	rect.Right = largeur - 1;
 	rect.Bottom = hauteur - 1;
 
-	// Définir les dimensions du tampon
+	// Dï¿½finir les dimensions du tampon
 	coord.X = largeur;
 	coord.Y = hauteur;
 
 	// Appliquer les dimensions du tampon
 	SetConsoleScreenBufferSize(hConsole, coord);
 
-	// Appliquer les dimensions de la fenêtre
+	// Appliquer les dimensions de la fenï¿½tre
 	SetConsoleWindowInfo(hConsole, TRUE, &rect);
 }
